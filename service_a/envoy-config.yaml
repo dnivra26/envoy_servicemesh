@@ -1,0 +1,132 @@
+admin:
+  access_log_path: "/tmp/admin_access.log"
+  address: 
+    socket_address: 
+      address: "127.0.0.1"
+      port_value: 9901
+static_resources:
+  listeners:
+
+    -
+      name: "service-a-svc-http-listener"
+      address:
+        socket_address:
+          address: "0.0.0.0"
+          port_value: 8786
+      filter_chains:
+        -
+          filters:
+            -
+              name: "envoy.http_connection_manager"
+              config:
+                stat_prefix: "ingress"
+                codec_type: "AUTO"
+                route_config:
+                  name: "service-a-svc-http-route"
+                  virtual_hosts:
+                    -
+                      name: "service-a-svc-http-route"
+                      domains:
+                        - "*"
+                      routes:
+                        -
+                          match:
+                            prefix: "/"
+                          route:
+                            cluster: "service_a"
+                http_filters:
+                  -
+                    name: "envoy.router"
+    -
+      name: "service-b-svc-http-listener"
+      address:
+        socket_address:
+          address: "0.0.0.0"
+          port_value: 8788
+      filter_chains:
+        -
+          filters:
+            -
+              name: "envoy.http_connection_manager"
+              config:
+                stat_prefix: "egress"
+                codec_type: "AUTO"
+                route_config:
+                  name: "service-b-svc-http-route"
+                  virtual_hosts:
+                    -
+                      name: "service-b-svc-http-route"
+                      domains:
+                        - "*"
+                      routes:
+                        -
+                          match:
+                            prefix: "/"
+                          route:
+                            cluster: "service_b"
+                http_filters:
+                  -
+                    name: "envoy.router"
+
+    -
+      name: "service-c-svc-http-listener"
+      address:
+        socket_address:
+          address: "0.0.0.0"
+          port_value: 8791
+      filter_chains:
+        -
+          filters:
+            -
+              name: "envoy.http_connection_manager"
+              config:
+                stat_prefix: "egress"
+                codec_type: "AUTO"
+                route_config:
+                  name: "service-b-svc-http-route"
+                  virtual_hosts:
+                    -
+                      name: "service-b-svc-http-route"
+                      domains:
+                        - "*"
+                      routes:
+                        -
+                          match:
+                            prefix: "/"
+                          route:
+                            cluster: "service_c"
+                http_filters:
+                  -
+                    name: "envoy.router"                                
+  clusters:
+      -
+        name: "service_a"
+        connect_timeout: "0.25s"
+        type: "strict_dns"
+        lb_policy: "ROUND_ROBIN"
+        hosts:
+          -
+            socket_address:
+              address: "service_a"
+              port_value: 8081  
+      -
+        name: "service_b"
+        connect_timeout: "0.25s"
+        type: "strict_dns"
+        lb_policy: "ROUND_ROBIN"
+        hosts:
+          -
+            socket_address:
+              address: "service_b_envoy"
+              port_value: 8789
+
+      -
+        name: "service_c"
+        connect_timeout: "0.25s"
+        type: "strict_dns"
+        lb_policy: "ROUND_ROBIN"
+        hosts:
+          -
+            socket_address:
+              address: "service_c_envoy"
+              port_value: 8790

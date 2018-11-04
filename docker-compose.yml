@@ -1,0 +1,50 @@
+version: '3'
+services:
+  front-envoy:
+    image: envoyproxy/envoy-alpine:v1.7.0
+    volumes:
+      - ./front_envoy/envoy-config.yaml:/etc/envoy-config.yaml
+    ports:
+      - "8080:80"
+      - "9901:9901"
+    command: "/usr/local/bin/envoy -c /etc/envoy-config.yaml --v2-config-only -l info --service-cluster 'front-envoy' --service-node 'front-envoy' --log-format '[METADATA][%Y-%m-%d %T.%e][%t][%l][%n] %v'"
+
+  service_a_envoy:
+    image: envoyproxy/envoy-alpine:v1.7.0
+    volumes:
+      - ./service_a/envoy-config.yaml:/etc/envoy-config.yaml
+    ports:
+      - "8786:8786"
+      - "8788:8788"
+    command: "/usr/local/bin/envoy -c /etc/envoy-config.yaml --v2-config-only -l info --service-cluster 'service-a' --service-node 'service-a' --log-format '[METADATA][%Y-%m-%d %T.%e][%t][%l][%n] %v'"
+
+  service_a:
+    build: service_a/
+    ports:
+    - "8081:8081"
+
+  service_b_envoy:
+    image: envoyproxy/envoy-alpine:v1.7.0
+    volumes:
+      - ./service_b/envoy-config.yaml:/etc/envoy-config.yaml
+    ports:
+      - "8789:8789"
+    command: "/usr/local/bin/envoy -c /etc/envoy-config.yaml --v2-config-only -l info --service-cluster 'service-b' --service-node 'service-b' --log-format '[METADATA][%Y-%m-%d %T.%e][%t][%l][%n] %v'"  
+
+  service_b:
+    build: service_b/
+    ports:
+    - "8082:8082"
+
+  service_c_envoy:
+    image: envoyproxy/envoy-alpine:v1.7.0
+    volumes:
+      - ./service_c/envoy-config.yaml:/etc/envoy-config.yaml
+    ports:
+      - "8790:8790"
+    command: "/usr/local/bin/envoy -c /etc/envoy-config.yaml --v2-config-only -l info --service-cluster 'service-c' --service-node 'service-c' --log-format '[METADATA][%Y-%m-%d %T.%e][%t][%l][%n] %v'"  
+
+  service_c:
+    build: service_c/
+    ports:
+    - "8083:8083"  
